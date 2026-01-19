@@ -4,6 +4,9 @@ import FoundItem from "@/models/FoundItem";
 import LostItem from "@/models/LostItem";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+
+/* ---------- HELPERS ---------- */
 
 function normalize(text) {
   return text
@@ -13,10 +16,23 @@ function normalize(text) {
     .filter((w) => w.length > 2);
 }
 
+/* ---------- MAILER ---------- */
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+/* ---------- API ---------- */
+
 export async function POST(req) {
-  // 🔐 AUTH CHECK — MUST BE FIRST
+  /* 🔐 AUTH CHECK */
   const cookieStore = await cookies();
   const session = cookieStore.get("session");
+
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -28,17 +44,17 @@ export async function POST(req) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  // 🔌 DB CONNECT
+  /* 🔌 DB */
   await connectDB();
 
-  // 📦 BODY
+  /* 📦 BODY */
   const { matchId, proof } = await req.json();
 
   if (!matchId || !proof) {
     return new Response("Invalid input", { status: 400 });
   }
 
-  // 🔎 FETCH MATCH
+  /* 🔎 MATCH */
   const match = await Match.findById(matchId);
   if (!match) {
     return new Response("Match not found", { status: 404 });
@@ -48,22 +64,29 @@ export async function POST(req) {
     return new Response("Already claimed", { status: 400 });
   }
 
-  // 🔎 FETCH LOST ITEM
+  /* 🔎 LOST ITEM */
   const lost = await LostItem.findById(match.lostItemId);
   if (!lost) {
     return new Response("Lost item not found", { status: 404 });
   }
 
-  // 🧠 PROOF CHECK
-  const lostWords = normalize(lost.description || "");
+  /* 🧠 PROOF VALIDATION (FIXED) */
+  const lostWords = normalize(
+    `${lost.name || ""} ${lost.category || ""} ${lost.description || ""}`
+  );
+
   const proofWords = normalize(proof || "");
   const overlap = proofWords.filter((w) => lostWords.includes(w));
 
-  if (overlap.length < 2) {
+  if (proofWords.length < 3) {
+    return new Response("Proof too vague", { status: 400 });
+  }
+
+  if (overlap.length < 1) {
     return new Response("Claim proof does not match", { status: 400 });
   }
 
-  // ✅ ACCEPT CLAIM
+  /* ✅ ACCEPT CLAIM */
   await Match.findByIdAndUpdate(matchId, {
     status: "accepted",
     claimProof: proof,
@@ -78,6 +101,27 @@ export async function POST(req) {
   await LostItem.findByIdAndUpdate(match.lostItemId, {
     status: "claimed",
   });
+
+  /* 📧 EMAIL USER */
+  try {
+    await transporter.sendMail({
+      from: `"Campus Lost & Found" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Your lost item has been verified",
+      html: `
+        <p>Hello ${user.name || ""},</p>
+
+        <p>Your claim for <strong>${lost.name || "your item"}</strong> has been successfully verified.</p>
+
+        <p>Please collect your item from the <strong>Security Office</strong> with a valid ID.</p>
+
+        <p>Thank you,<br/>Campus Lost & Found Team</p>
+      `,
+    });
+  } catch (err) {
+    console.error("Email error:", err);
+    // Do NOT block success on email failure
+  }
 
   return Response.json({ success: true });
 }
