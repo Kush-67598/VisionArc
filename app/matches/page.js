@@ -11,6 +11,13 @@ function getConfidence(score) {
     return { label: "Medium", color: "bg-yellow-100 text-yellow-700" };
   return { label: "Low", color: "bg-red-100 text-red-700" };
 }
+function pretty(text = "") {
+  return text
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 export default function MatchesPage() {
   const HomeIcon = ({ className }) => (
@@ -175,10 +182,10 @@ export default function MatchesPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                      {m.lostItemId.name}
+                      {pretty(m.lostItemId.name)}
                     </h2>
                     <p className="text-xs text-gray-500 mt-1">
-                      Lost at {m.lostItemId.location}
+                      Lost at {pretty(m.lostItemId.location)}
                     </p>
                   </div>
 
@@ -190,7 +197,7 @@ export default function MatchesPage() {
                     <span
                       className={`text-xs font-medium px-3 py-1 rounded-full ${confidence.color}`}
                     >
-                      {confidence.label} confidence
+                      {confidence.label} Confidence
                     </span>
                   )}
                 </div>
@@ -208,15 +215,13 @@ export default function MatchesPage() {
                   <div className="text-sm text-gray-700 space-y-2">
                     <p>
                       <span className="font-medium">Category:</span>{" "}
-                      {m.lostItemId.category}
+                      {pretty(m.lostItemId.category)}
                     </p>
                     <p>
                       <span className="font-medium">Found at:</span>{" "}
-                      {m.foundItemId.location}
+                      {pretty(m.foundItemId.location)}
                     </p>
-                    <p className="text-gray-500">
-                      Match score: {m.score}
-                    </p>
+                    <p className="text-gray-500">Match score: {m.score}</p>
                   </div>
                 </div>
 
