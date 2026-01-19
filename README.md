@@ -57,7 +57,7 @@ A full-stack web application that helps users report lost and found items on cam
 ---
 
 ## 📁 Project Structure
-
+```
 app/
 ├─ api/
 │ ├─ google/
@@ -82,7 +82,7 @@ models/
 
 lib/
 └─ db.js
-
+```
 ---
 
 ## ⚙️ Environment Variables
@@ -98,19 +98,22 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/api/google/callback
 
 JWT_SECRET=your_jwt_secret
 
+```
+
 
 🛠️ Setup & Installation
-
+```
 Clone the repository
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
-
+```
+```
 npm install
 npm run dev
 http://localhost:3000
-
+```
 🔒 Security Notes
-
+```
 Authentication is enforced server-side
 
 Claims cannot be submitted without login
@@ -118,9 +121,9 @@ Claims cannot be submitted without login
 JWT is stored in HTTP-only cookies
 
 Proof validation reduces fraudulent claims
-
+```
 📌 Future Improvements
-
+```
 Replace window.prompt with a modal
 
 Add claim history per user
@@ -130,11 +133,13 @@ Admin moderation dashboard
 Email notifications
 
 Improved NLP-based matching
-
+```
 📄 License
-
+```
 This project is intended for educational and personal use.
-
+```
 👤 Author
+```
 
-Built by Vidhi
+Built by Vidhi,Sejal,Ankur
+```
