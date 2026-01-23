@@ -208,7 +208,10 @@ export default function MatchesPage() {
                     <img
                       src={m.foundItemId.imageUrl}
                       alt="Found item"
-                      className="w-36 h-36 object-cover rounded-xl border border-gray-200 bg-gray-100"
+                      onClick={() =>
+                        window.open(m.foundItemId.imageUrl, "_blank")
+                      }
+                      className="w-36 h-36 cursor-pointer hover:opacity-90 hover:ring-1 hover:ring-gray-300 object-cover rounded-xl border border-gray-200 bg-gray-100"
                     />
                   )}
 
