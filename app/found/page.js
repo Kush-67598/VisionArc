@@ -6,14 +6,35 @@ import { toast, ToastContainer } from "react-toastify";
 import { ClipLoader } from "react-spinners";
 import "react-toastify/dist/ReactToastify.css";
 
+const CATEGORIES = [
+  "phone",
+  "laptop",
+  "tablet",
+  "charger",
+  "earphones",
+  "wallet",
+  "id card",
+  "keys",
+  "books",
+  "notebooks",
+  "bag",
+  "clothing",
+  "water bottle",
+  "calculator",
+  "watch",
+  "umbrella",
+  "other",
+];
+
 export default function FoundPage() {
+  const router = useRouter();
+
   const [form, setForm] = useState({
     category: "",
     location: "",
     description: "",
   });
 
-  const router = useRouter();
   const [imageBase64, setImageBase64] = useState("");
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +46,10 @@ export default function FoundPage() {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image too large. Max size is 2MB.",{autoClose:1500,pauseOnHover:false});
+      toast.error("Image too large. Max size is 2MB.", {
+        autoClose: 1500,
+        pauseOnHover: false,
+      });
       return;
     }
 
@@ -40,18 +64,35 @@ export default function FoundPage() {
     e.preventDefault();
     if (loading) return;
 
+    if (!form.category || !form.location) {
+      toast.error("Please fill all required fields.", {
+        autoClose: 1500,
+        pauseOnHover: false,
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/found", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, imageBase64 }),
+        body: JSON.stringify({
+          ...form,
+          category: form.category.toLowerCase(),
+          location: form.location.toLowerCase(),
+          description: form.description.toLowerCase(),
+          imageBase64,
+        }),
       });
 
       if (!res.ok) throw new Error();
 
-      toast.success("Found item reported. Matching in progress.",{autoClose:1500,pauseOnHover:false});
+      toast.success("Found item reported. Matching in progress.", {
+        autoClose: 1500,
+        pauseOnHover: false,
+      });
 
       setForm({ category: "", location: "", description: "" });
       setImageBase64("");
@@ -59,7 +100,10 @@ export default function FoundPage() {
 
       setTimeout(() => router.push("/"), 1200);
     } catch {
-      toast.error("Something went wrong. Please try again.",{autoClose:1500,pauseOnHover:false});
+      toast.error("Something went wrong. Please try again.", {
+        autoClose: 1500,
+        pauseOnHover: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -88,21 +132,32 @@ export default function FoundPage() {
             onSubmit={submit}
             className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6 p-10"
           >
+            {/* Category */}
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">
                 Category
               </label>
-              <input
+              <select
                 required
                 value={form.category}
-                className="
-                  w-full rounded-md text-gray-500 border border-gray-300 px-3 py-2 text-sm
-                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                "
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
+              >
+                <option value="" disabled>
+                  Select category
+                </option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Location */}
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-800">
                 Location Found
@@ -110,14 +165,15 @@ export default function FoundPage() {
               <input
                 required
                 value={form.location}
-                className="
-                  w-full rounded-md text-gray-500 border border-gray-300 px-3 py-2 text-sm
-                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                "
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                className="w-full rounded-md text-gray-500 border border-gray-300 px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                onChange={(e) =>
+                  setForm({ ...form, location: e.target.value })
+                }
               />
             </div>
 
+            {/* Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-1 text-gray-800">
                 Description
@@ -125,17 +181,15 @@ export default function FoundPage() {
               <textarea
                 rows={3}
                 value={form.description}
-                className="
-                  w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2 text-sm
-                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                "
+                className="w-full rounded-md border text-gray-500 border-gray-300 px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
               />
             </div>
 
-            {/* File upload */}
+            {/* Image upload */}
             <div className="md:col-span-2">
               <input
                 ref={fileInputRef}
@@ -149,10 +203,8 @@ export default function FoundPage() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="
-                    px-4 py-2 rounded-md border border-gray-300
-                    text-sm text-gray-800 hover:bg-gray-100 transition
-                  "
+                  className="px-4 py-2 rounded-md border border-gray-300
+                             text-sm text-gray-800 hover:bg-gray-100 transition"
                 >
                   Upload Image
                 </button>
@@ -167,11 +219,9 @@ export default function FoundPage() {
             <div className="md:col-span-2 flex justify-end pt-6 border-t border-gray-200">
               <button
                 disabled={loading}
-                className="
-                  bg-gray-900 text-white px-8 py-3 rounded-md text-sm font-medium
-                  flex items-center gap-2 hover:bg-gray-800 transition
-                  disabled:opacity-60
-                "
+                className="bg-gray-900 text-white px-8 py-3 rounded-md text-sm font-medium
+                           flex items-center gap-2 hover:bg-gray-800 transition
+                           disabled:opacity-60"
               >
                 {loading ? (
                   <>
